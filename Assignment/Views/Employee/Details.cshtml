@@ -1,0 +1,62 @@
+﻿@model Assignment.Models.EmployeeMaster
+
+@{
+    ViewData["Title"] = "Employee Details";
+}
+
+<div class="container mt-5">
+    <div class="card shadow-lg border-0">
+        <div class="card-header bg-info text-white">
+            <h4 class="mb-0"><i class="bi bi-person-badge"></i> Employee Details</h4>
+        </div>
+
+        <div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-4 fw-bold">EmployeeId</dt>
+                <dd class="col-sm-8">@Html.DisplayFor(model => model.EmployeeId)</dd>
+
+                <dt class="col-sm-4 fw-bold">Employee Code</dt>
+                <dd class="col-sm-8">@Html.DisplayFor(model => model.EmployeeCode)</dd>
+
+                <dt class="col-sm-4 fw-bold">Employee Name</dt>
+                <dd class="col-sm-8">@Html.DisplayFor(model => model.EmployeeName)</dd>
+
+                <dt class="col-sm-4 fw-bold">Department</dt>
+                <dd class="col-sm-8">@Html.DisplayFor(model => model.Department)</dd>
+
+                <dt class="col-sm-4 fw-bold">Designation</dt>
+                <dd class="col-sm-8">@Html.DisplayFor(model => model.Designation)</dd>
+
+                <dt class="col-sm-4 fw-bold">Joining Date</dt>
+                <dd class="col-sm-8">@Html.DisplayFor(model => model.JoiningDate)</dd>
+
+                <dt class="col-sm-4 fw-bold">Salary</dt>
+                <dd class="col-sm-8">@Html.DisplayFor(model => model.Salary)</dd>
+
+                <dt class="col-sm-4 fw-bold">Status</dt>
+                <dd class="col-sm-8">
+                    @if (Model.Status == true)
+                    {
+                        <span class="badge bg-success">Active</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger">Inactive</span>
+                    }
+                </dd>
+
+                <dt class="col-sm-4 fw-bold">Created Date</dt>
+                <dd class="col-sm-8">@Html.DisplayFor(model => model.CreatedDate)</dd>
+            </dl>
+        </div>
+
+        <div class="card-footer text-end">
+            <a asp-action="Edit" asp-route-id="@Model?.EmployeeId" class="btn btn-primary px-4">
+                <i class="bi bi-pencil-square"></i> Edit
+            </a>
+            <a asp-action="Index" class="btn btn-secondary px-4 ms-2">
+                <i class="bi bi-arrow-left-circle"></i> Back to List
+            </a>
+        </div>
+    </div>
+</div>

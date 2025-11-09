@@ -1,0 +1,178 @@
+﻿@model IEnumerable<Assignment.Models.EmployeeMaster>
+
+@{
+    ViewData["Title"] = "Employee List";
+}
+<h1 class="text-center my-4">Employee List</h1>
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show mt-3 shadow rounded-3 fw-bold text-center" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <a asp-action="Create" class="btn btn-success me-2">
+            <i class="bi bi-plus-circle"></i> Create New
+        </a>
+        <button id="exportBtn" type="button" class="btn btn-outline-success">
+            <i class="bi bi-file-earmark-excel"></i> Export to Excel
+        </button>
+    </div>
+
+    <div class="input-group" style="max-width: 250px;">
+        <span class="input-group-text bg-primary text-white">
+            <i class="bi bi-search"></i>
+        </span>
+        <input type="text" id="searchInput" class="form-control"
+               placeholder="Search employees... (By Name, Code, Department, etc.)" />
+    </div>
+</div>
+
+<table id="employeeTable" class="table table-bordered table-hover shadow-sm">
+    <thead class="table-dark text-center">
+        <tr>
+            <th>@Html.DisplayNameFor(model => model.EmployeeCode)</th>
+            <th>@Html.DisplayNameFor(model => model.EmployeeName)</th>
+            <th>@Html.DisplayNameFor(model => model.Department)</th>
+            <th>@Html.DisplayNameFor(model => model.Designation)</th>
+            <th>@Html.DisplayNameFor(model => model.JoiningDate)</th>
+            <th>@Html.DisplayNameFor(model => model.Salary)</th>
+            <th>@Html.DisplayNameFor(model => model.Status)</th>
+            <th>@Html.DisplayNameFor(model => model.CreatedDate)</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr class="text-center">
+                <td>@Html.DisplayFor(modelItem => item.EmployeeCode)</td>
+                <td>@Html.DisplayFor(modelItem => item.EmployeeName)</td>
+                <td>@Html.DisplayFor(modelItem => item.Department)</td>
+                <td>@Html.DisplayFor(modelItem => item.Designation)</td>
+                <td>@item.JoiningDate?.ToString("dd-MM-yyyy")</td>
+                <td>₹@item.Salary</td>
+                <td>
+                    @if (item.Status == true)
+                    {
+                        <span class="badge bg-success">Active</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger">Inactive</span>
+                    }
+                </td>
+                <td>@item.CreatedDate?.ToString("dd-MM-yyyy")</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.EmployeeId" class="btn btn-sm btn-warning">Edit</a>
+                    <a asp-action="Details" asp-route-id="@item.EmployeeId" class="btn btn-sm btn-info text-white">Details</a>
+                    <a asp-action="Delete" asp-route-id="@item.EmployeeId" class="btn btn-sm btn-danger">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<div id="pagination" class="d-flex justify-content-center mt-3"></div>
+
+<!-- ✅ Add SheetJS for Excel Export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const table = document.getElementById("employeeTable");
+        const tbody = table.querySelector("tbody");
+        const rows = Array.from(tbody.querySelectorAll("tr"));
+        const searchInput = document.getElementById("searchInput");
+        const rowsPerPage = 5;
+        const pagination = document.getElementById("pagination");
+        let currentPage = 1;
+        let filteredRows = [...rows];
+        // 🔍 Search filter logic
+        searchInput.addEventListener("input", function () {
+            const query = this.value.toLowerCase();
+            filteredRows = rows.filter(row =>
+                row.textContent.toLowerCase().includes(query)
+            );
+            currentPage = 1;
+            setupPagination();
+            displayTable(currentPage);
+        });
+        // 🧭 Pagination
+        function displayTable(page) {
+            const start = (page - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+            rows.forEach(row => row.style.display = "none");
+            filteredRows.forEach((row, index) => {
+                if (index >= start && index < end) row.style.display = "";
+            });
+        }
+        function setupPagination() {
+            const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+            pagination.innerHTML = "";
+            if (totalPages <= 1) return;
+
+            const ul = document.createElement("ul");
+            ul.className = "pagination";
+
+            for (let i = 1; i <= totalPages; i++) {
+                const li = document.createElement("li");
+                li.className = "page-item";
+                const a = document.createElement("a");
+                a.className = "page-link";
+                a.href = "#";
+                a.textContent = i;
+                a.addEventListener("click", function (e) {
+                    e.preventDefault();
+                    currentPage = i;
+                    displayTable(currentPage);
+                    updateActivePage();
+                });
+                li.appendChild(a);
+                ul.appendChild(li);
+            }
+            pagination.appendChild(ul);
+            updateActivePage();
+        }
+        function updateActivePage() {
+            const pageLinks = pagination.querySelectorAll(".page-item");
+            pageLinks.forEach((li, index) => {
+                li.classList.toggle("active", index + 1 === currentPage);
+            });
+        }
+        setupPagination();
+        displayTable(currentPage);
+        // 📤 Export only filtered rows to Excel
+        document.getElementById("exportBtn").addEventListener("click", function () {
+            const filteredVisibleRows = filteredRows; // Only filtered data
+            // Table Headers
+            const headers = Array.from(table.querySelectorAll("thead th"))
+                .map(th => th.innerText.trim());
+            const data = [headers];
+            // Table Data
+            filteredVisibleRows.forEach(row => {
+                const cells = Array.from(row.querySelectorAll("td"))
+                    .map(td => td.innerText.trim());
+                data.push(cells);
+            });
+            // Create Excel
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Filtered_Employees");
+            // Save Excel File
+            XLSX.writeFile(wb, "Filtered_Employee_List.xlsx");
+        });
+          setTimeout(function () {
+            var alert = document.querySelector('.alert');
+            if (alert) {
+                alert.classList.remove('show');
+                alert.classList.add('hide');
+                setTimeout(() => alert.remove(), 1000);
+            }
+        }, 3000);
+    });
+
+</script>
